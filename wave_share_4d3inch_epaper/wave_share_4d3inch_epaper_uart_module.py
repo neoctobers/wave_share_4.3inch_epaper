@@ -7,78 +7,225 @@ wave_share e-paper module user manual in pdf:
     http://www.waveshare.net/w/upload/9/9c/4.3inch-e-Paper-User-Manual-CN.pdf
 """
 
-
-
 import serial
+import struct
 
 
 class EPaper(object):
+    # serial
+    SERIAL_BAUD_RATE = 115200
+    SERIAL_TIMEOUT = 1
+
     # color
-    COLOR_BLACK = 0x00
-    COLOR_DARK_GRAY = 0x01
-    COLOR_GRAY = 0x02
-    COLOR_WHITE = 0x03
+    COLOR_BLACK = b'\x00'
+    COLOR_DARK_GRAY = b'\x01'
+    COLOR_GRAY = b'\x02'
+    COLOR_WHITE = b'\x03'
 
     # font size
-    FONT_SIZE_32 = 0x01
-    FONT_SIZE_48 = 0x02
-    FONT_SIZE_64 = 0x03
+    FONT_SIZE_32 = b'\x01'
+    FONT_SIZE_48 = b'\x02'
+    FONT_SIZE_64 = b'\x03'
 
-    # mem location
-    MEM_FLASH = 0x00
-    MEM_SD = 0x01
+    # storage location
+    STORAGE_FLASH = b'\x00'
+    STORAGE_SD = b'\x01'
 
     # rotation
-    ROTATION_NORMAL = 0x00
-    ROTATION_90 = 0x01
-    ROTATION_180 = 0x02
-    ROTATION_270 = 0x03
+    ROTATION_0 = b'\x00'
+    ROTATION_90 = b'\x01'
+    ROTATION_180 = b'\x02'
+    ROTATION_270 = b'\x03'
 
     # commands
-    CMD_HANDSHAKE = 0x00
+    CMD_HANDSHAKE = b'\x00'
 
-    CMD_GET_BAUD_RATE = 0x02
-    CMD_SET_BAUD_RATE = 0x01
+    CMD_GET_BAUD_RATE = b'\x02'
+    CMD_SET_BAUD_RATE = b'\x01'
 
-    CMD_GET_MEMORY = 0x06
-    CMD_SET_MEMORY = 0x07
+    CMD_GET_STORAGE = b'\x06'
+    CMD_SET_STORAGE = b'\x07'
 
-    CMD_SCREEN_SLEEP = 0x08
+    CMD_CLEAR = b'\x2E'
+    CMD_UPDATE = b'\x0A'
+    CMD_SLEEP = b'\x08'
 
-    CMD_UPDATE = 0x0A
+    CMD_GET_ROTATION = b'\x0C'
+    CMD_SET_ROTATION = b'\x0D'
 
-    CMD_GET_ROTATION = 0x0C
-    CMD_SET_ROTATION = 0x0D
+    CMD_LOAD_FONT = b'\x0E'
+    CMD_LOAD_BMP = b'\x0F'
 
-    CMD_LOAD_FONT = 0x0E
-    CMD_LOAD_PIC = 0x0F
+    CMD_GET_COLOR = b'\x11'
+    CMD_SET_COLOR = b'\x10'
 
-    CMD_GET_COLOR = 0x11
-    CMD_SET_COLOR = 0x10
+    CMD_GET_FONT_SIZE_EN = b'\x1C'
+    CMD_GET_FONT_SIZE_ZH = b'\x1D'
 
-    CMD_GET_FONT_EN = 0x1C
-    CMD_SET_FONT_EN = 0x1E
+    CMD_SET_FONT_SIZE_EN = b'\x1E'
+    CMD_SET_FONT_SIZE_ZH = b'\x1F'
 
-    CMD_GET_FONT_CN = 0x1D
-    CMD_SET_FONT_CH = 0x1F
+    CMD_DRAW_POINT = b'\x20'
+    CMD_DRAW_LINE = b'\x22'
 
-    CMD_DRAW_POINT = 0x20
-    CMD_DRAW_LINE = 0x22
+    CMD_DRAW_RECT = b'\x25'
+    CMD_FILL_RECT = b'\x24'
 
-    CMD_DRAW_RECT = 0x25
-    CMD_FILL_RECT = 0x24
+    CMD_DRAW_CIRCLE = b'\x26'
+    CMD_FILL_CIRCLE = b'\x27'
 
-    CMD_DRAW_CIRCLE = 0x26
-    CMD_FILL_CIRCLE = 0x27
+    CMD_DRAW_TRI = b'\x28'
+    CMD_FILL_TRI = b'\x29'
 
-    CMD_DRAW_TRI = 0x28
-    CMD_FILL_TRI = 0x29
+    CMD_DRAW_STRING = b'\x30'
+    CMD_DRAW_BMP = b'\x70'
 
-    CMD_CLEAR = 0x2E
+    def __init__(self,
+                 com_port: str,
+                 baud_rate: int = SERIAL_BAUD_RATE,
+                 timeout: int = SERIAL_TIMEOUT,
+                 ):
 
-    CMD_DRAW_STRING = 0x30
-    CMD_DRAW_BITMAP = 0x70
-
-    def __init__(self, tty: str):
-        self._tty = tty
         self._socket = None
+        self._com_port = com_port
+        self._baud_rate = baud_rate
+        self._timeout = timeout
+        self.connect()
+
+    def set_com_port(self, com_port):
+        self._com_port = com_port
+
+    def set_baud_rate(self, baud_rate: int = SERIAL_BAUD_RATE):
+        self._baud_rate = baud_rate
+
+    def set_timeout(self, timeout: int = SERIAL_TIMEOUT):
+        self._timeout = timeout
+
+    def connect(self):
+        self._socket = serial.Serial(port=self._com_port,
+                                     baudrate=self._baud_rate,
+                                     stopbits=serial.STOPBITS_ONE,
+                                     bytesize=serial.EIGHTBITS,
+                                     timeout=self._timeout)
+
+    def disconnect(self):
+        self._socket.close()
+
+    @staticmethod
+    def _build_frame(cmd, args=None):
+        header = b'\xA5'
+        end = b'\xCC\x33\xC3\x3C'
+
+        if args is None:
+            frame = header + struct.pack('>h', 9) + cmd + end
+        else:
+            frame = header + struct.pack('>h', 9 + len(args)) + cmd + args + end
+
+        parity = 0x00
+        for _byte in frame:
+            parity ^= _byte
+
+        return frame + bytes([parity])
+
+    def _send(self, cmd, args=None):
+        if self._socket is None:
+            print('>> NOT connected.')
+            return
+
+        frame = self._build_frame(cmd=cmd, args=args)
+
+        self._socket.write(frame)
+        self._socket.flushInput()
+
+    def handshake(self):
+        self._send(self.CMD_HANDSHAKE)
+
+    def load_font(self):
+        """
+        Import the font files from TF card to FLASH.
+        Font files include GBK32/48/64.FON
+        LED will flicker 3 times when starts and ends.
+        48MB allocated in FLASH for fonts.
+        """
+        self._send(self.CMD_LOAD_FONT)
+
+    def load_bmp(self):
+        """
+        Import the image files from TF card to FLASH.
+        LED will flicker 3 times when starts and ends.
+        80MB allocated in FLASH for images.
+        """
+        self._send(self.CMD_LOAD_BMP)
+
+    def clear(self):
+        self._send(self.CMD_CLEAR)
+
+    def update(self):
+        self._send(self.CMD_UPDATE)
+
+    def sleep(self):
+        self._send(self.CMD_SLEEP)
+
+    def set_rotation(self, rotation=ROTATION_0):
+        if rotation not in [self.ROTATION_0, self.ROTATION_90, self.ROTATION_180, self.ROTATION_270]:
+            print('>> Invalid rotation value.')
+            return
+
+        self._send(self.CMD_SET_ROTATION, rotation)
+
+    def set_storage(self, storage=STORAGE_FLASH):
+        if storage not in [self.STORAGE_FLASH, self.STORAGE_SD]:
+            print('>> Invalid storage value.')
+            return
+
+        self._send(self.CMD_SET_STORAGE, storage)
+
+    def set_font_size_en(self, font_size: int = 32):
+        if font_size not in [self.FONT_SIZE_32, self.FONT_SIZE_48, self.FONT_SIZE_64]:
+            print('>> Invalid font_size value.')
+            return
+
+        self._send(self.CMD_SET_FONT_SIZE_EN, font_size)
+
+    def set_font_size_zh(self, font_size):
+        if font_size not in [self.FONT_SIZE_32, self.FONT_SIZE_48, self.FONT_SIZE_64]:
+            print('>> Invalid font_size value.')
+            return
+
+        self._send(self.CMD_SET_FONT_SIZE_ZH, font_size)
+
+    def text(self, x0, y0, text):
+        args = struct.pack('>hh', x0, y0) + bytearray(text, 'gb2312') + bytes(1)
+        self._send(self.CMD_DRAW_STRING, args)
+
+    def line(self, x0, y0, x1, y1):
+        args = struct.pack('>hhhh', x0, y0, x1, y1)
+        self._send(self.CMD_DRAW_LINE, args)
+
+    def rect(self, x0, y0, x1, y1):
+        args = struct.pack('>hhhh', x0, y0, x1, y1)
+        self._send(self.CMD_DRAW_RECT, args)
+
+    def fill_rect(self, x0, y0, x1, y1):
+        args = struct.pack('>hhhh', x0, y0, x1, y1)
+        self._send(self.CMD_FILL_RECT, args)
+
+    def circle(self, x0, y0, r):
+        args = struct.pack('>hhh', x0, y0, r)
+        self._send(self.CMD_DRAW_CIRCLE, args)
+
+    def fill_circle(self, x0, y0, r):
+        args = struct.pack('>hhh', x0, y0, r)
+        self._send(self.CMD_FILL_CIRCLE, args)
+
+    def tri(self, x0, y0, x1, y1, x2, y2):
+        args = struct.pack('>hhhhhh', x0, y0, x1, y1, x2, y2)
+        self._send(self.CMD_DRAW_TRI, args)
+
+    def fill_tri(self, x0, y0, x1, y1, x2, y2):
+        args = struct.pack('>hhhhhh', x0, y0, x1, y1, x2, y2)
+        self._send(self.CMD_FILL_TRI, args)
+
+    def bmp(self, x0, y0, filename):
+        cmdParm = struct.pack('>hh', x0, y0) + bytearray(filename.upper(), 'ascii') + bytes(1)
+        self._send(self.CMD_DRAW_BMP, cmdParm)
