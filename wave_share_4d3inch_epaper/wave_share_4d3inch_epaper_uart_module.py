@@ -16,6 +16,10 @@ class EPaper(object):
     SERIAL_BAUD_RATE = 115200
     SERIAL_TIMEOUT = 1
 
+    # screen
+    SCREEN_WIDTH = 800
+    SCREEN_HEIGHT = 600
+
     # color
     COLOR_BLACK = b'\x00'
     COLOR_DARK_GRAY = b'\x01'
@@ -111,6 +115,14 @@ class EPaper(object):
     def disconnect(self):
         self._socket.close()
 
+    @property
+    def width(self):
+        return self.SCREEN_WIDTH
+
+    @property
+    def height(self):
+        return self.SCREEN_HEIGHT
+
     @staticmethod
     def _build_frame(cmd, args=None):
         header = b'\xA5'
@@ -193,6 +205,13 @@ class EPaper(object):
             return
 
         self._send(self.CMD_SET_FONT_SIZE_ZH, font_size)
+
+    def set_color(self, color):
+        if color not in [self.COLOR_BLACK, self.COLOR_DARK_GRAY, self.COLOR_GRAY, self.COLOR_WHITE]:
+            print('>> Invalid color value.')
+            return
+
+        self._send(self.CMD_SET_COLOR, color)
 
     def text(self, x0, y0, text):
         args = struct.pack('>hh', x0, y0) + bytearray(text, 'gb2312') + bytes(1)
