@@ -24,6 +24,15 @@ ep.set_color(ep.COLOR_BLACK)
 # rect
 ep.rect(0, 0, 799, 599)
 
+# gray
+ep.set_color(ep.COLOR_GRAY)
+
+# rect
+ep.rect(10, 10, 790, 590)
+
+# black
+ep.set_color(ep.COLOR_BLACK)
+
 # text
 ep.set_font_size_en(ep.FONT_SIZE_48)
 ep.set_font_size_zh(ep.FONT_SIZE_48)
@@ -32,37 +41,46 @@ ep.text(20, 50, 'WaveShare 4.3inch e-paper UART module')
 # dark gray
 ep.set_color(ep.COLOR_DARK_GRAY)
 
-# rect
-ep.rect(10, 10, 790, 590)
-
 # text
 ep.set_font_size_en(ep.FONT_SIZE_32)
 ep.set_font_size_zh(ep.FONT_SIZE_32)
 ep.text(20, 150, 'pip3 install -U wave-share-4d3inch-epaper')
 
-# dark gray
-ep.set_color(ep.COLOR_GRAY)
-
 # author
-ep.text(20, 300, 'Author: neoctober')
-ep.text(20, 350, 'Github: https://git.io/wave_share_4.3inch_epaper')
-
-# circle
-ep.fill_circle(75, 525, 25)
-ep.circle(175, 525, 25)
-
-# tri
-ep.fill_tri(275, 500, 250, 550, 300, 550)
-ep.tri(375, 500, 350, 550, 400, 550)
-
-# rect
-ep.fill_rect(450, 500, 500, 550)
-ep.rect(550, 500, 600, 550)
+ep.text(20, 270, 'Author: neoctobers')
+ep.text(20, 320, 'Github: https://git.io/wave_share_4.3inch_epaper')
 
 # line
 ep.line(700, 300, 700, 550)
 ep.line(710, 300, 710, 550)
 ep.line(720, 300, 720, 550)
+
+# text
+ep.text(50, 450, 'BLACK')
+
+# circle
+ep.fill_circle(75, 525, 25)
+ep.circle(175, 525, 25)
+
+# dark gray
+ep.set_color(ep.COLOR_DARK_GRAY)
+
+# text
+ep.text(250, 450, 'DARK_GRAY')
+
+# tri
+ep.fill_tri(275, 500, 250, 550, 300, 550)
+ep.tri(375, 500, 350, 550, 400, 550)
+
+# gray
+ep.set_color(ep.COLOR_GRAY)
+
+# text
+ep.text(450, 450, 'GRAY')
+
+# rect
+ep.fill_rect(450, 500, 500, 550)
+ep.rect(550, 500, 600, 550)
 
 # bmp
 ep.bmp(625, 125, 'FNUT.BMP')

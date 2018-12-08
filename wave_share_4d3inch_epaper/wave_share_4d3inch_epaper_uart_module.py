@@ -5,8 +5,10 @@ a package for:
 
 wave_share e-paper module user manual in pdf:
     http://www.waveshare.net/w/upload/9/9c/4.3inch-e-Paper-User-Manual-CN.pdf
-"""
 
+Documentation：
+    https://neoctobers.readthedocs.io/en/latest/dev/wave_share_4d3inch_epaper.html
+"""
 import serial
 import struct
 
