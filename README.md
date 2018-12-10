@@ -4,4 +4,4 @@
 
 For [WaveShare 4.3inch e-paper UART module](http://www.waveshare.net/wiki/4.3inch_e-Paper_UART_Module)
 
-![Screen](screen.jpg =500)
+<img alt="photo" src="./screen.jpg" width="300"/>
