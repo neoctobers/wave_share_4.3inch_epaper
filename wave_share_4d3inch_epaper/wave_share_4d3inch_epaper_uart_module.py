@@ -188,7 +188,7 @@ class EPaper(object):
         self._send(self.CMD_SET_ROTATION, rotation)
 
     def set_storage(self, storage=STORAGE_FLASH):
-        if storage not in [self.STORAGE_FLASH, self.STORAGE_SD]:
+        if storage not in [self.STORAGE_FLASH, self.STORAGE_TF]:
             print('>> Invalid storage value.')
             return
 

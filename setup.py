@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="wave_share_4d3inch_epaper",
-    version="1.0.3",
+    version="1.0.4",
     author="@neoctobers",
     author_email="neoctobers@gmail.com",
     description="For WaveShare 4.3inch e-paper UART module.",
