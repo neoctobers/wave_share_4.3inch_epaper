@@ -35,7 +35,7 @@ class EPaper(object):
 
     # storage location
     STORAGE_FLASH = b'\x00'
-    STORAGE_SD = b'\x01'
+    STORAGE_TF = b'\x01'
 
     # rotation
     ROTATION_0 = b'\x00'
